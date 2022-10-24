@@ -3,6 +3,7 @@
 
 // list of mounted file systems
 FSYS *file_systems[MAX_DEVICES]; // assume all pointers are initially NULL
+char last_dev = 'A';
 
 FILE *vfs_open_file(const char *pathname) {
     if (pathname) {
@@ -45,11 +46,17 @@ int32_t vfs_close_file(FILE *file) {
 }
 
 int32_t   vfs_register_fsys(FSYS *fsys, uint32_t device_id) {
-    if (device_id > 'Z' || device_id < 'A')
+    if (device_id > 'Z' || device_id < 'A') {
+        ft_printf("Failed to register VFS: dev id out of bounds\n");
         return -1; // if device id is out of bounds
-    if (file_systems[device_id - 'A']) {
+    }
+    else {
         if (fsys) {
+            ft_printf("Registered FS, drive number %c:\n", device_id);
             file_systems[device_id - 'A'] = fsys;
+        } else {
+            ft_printf("Failed to register VFS: invalid FSYS\n");
+            return -1;
         }
     }
     return 1;

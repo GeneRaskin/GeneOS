@@ -2,6 +2,10 @@
 #include "../fb_write/fb_write.h"
 #include "../fb_routines/fb_routines.h"
 
+char                line_buffer[LINE_BUFFER_SIZE] = {0};
+uint32_t            line_length = 0;
+volatile uint8_t    enter_pressed = 0;
+
 const char      ASCIITable[] = {
         0, 0, '1', '2',
         '3', '4', '5', '6',
@@ -48,10 +52,15 @@ void	write_to_console(void)
 			is_right_shift_pressed = 0;
 			return;
 		case ENTER:
+            line_buffer[line_length] = 0;
 			fb_write("\n", 1);
+            enter_pressed = 1;
 			return;
 		case SPACEBAR:
 			fb_write(" ", 1);
+            if (line_length >= LINE_BUFFER_SIZE)
+                line_length = 0;
+            line_buffer[line_length++] = ' ';
 			return;
 		case BACKSPACE:
 			fb_clear_char();
@@ -65,11 +74,22 @@ void	write_to_console(void)
 
 char	translate(uint8_t code, int uppercase)
 {
-	if (code >58)
+    char    translated;
+	if (code > 58)
 		return 0;
+    if (line_length >= LINE_BUFFER_SIZE) {
+        line_length = 0;
+    }
 	if (uppercase)
 	{
-		return ASCIITable[code] - 32;
+        if (code == 12)
+            translated = '_';
+        else
+            translated = ASCIITable[code] - 32;
+        line_buffer[line_length++] = translated;
+		return translated;
 	}
-	return ASCIITable[code];
+    translated = ASCIITable[code];
+    line_buffer[line_length++] = translated;
+	return translated;
 }

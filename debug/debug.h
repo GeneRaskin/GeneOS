@@ -2,6 +2,7 @@
 #define DEBUG_H
 
 #include <stdint.h>
+#include "errno.h"
 #include "../memory/kheap/kheap.h"
 
 struct cpu_state {
@@ -48,5 +49,6 @@ void    printf_reg(char *reg_name, uint32_t reg_value);
 void    get_stack_trace(uint32_t max_frames);
 void    print_heap(heap_t *heap);
 void    print_heap_index(heap_t *heap);
+void    print_mem(uint8_t *buf, uint32_t num_bytes);
 
 #endif

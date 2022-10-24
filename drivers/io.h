@@ -65,6 +65,7 @@ extern char		*fb;
  */
 
 void	outb(uint16_t port, uint8_t data);
+void    outbw(uint16_t port, uint16_t data);
 void    outbl(uint16_t port, uint32_t data);
 
 /** inb, inbl:
@@ -75,6 +76,9 @@ void    outbl(uint16_t port, uint32_t data);
  */
 
 uint8_t	    inb(uint16_t port);
+uint16_t    inbw(uint16_t port);
 uint32_t    inbl(uint16_t port);
+void        insl(uint16_t port, uint8_t *buffer, uint32_t quads);
+void        outsb(uint16_t port, uint8_t *buffer, uint32_t quads);
 
 #endif

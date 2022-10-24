@@ -1,4 +1,4 @@
-global outb, outbl
+global outb, outbl, outbw
 
 outb:
 	mov al, [esp + 8]	; move the data to be sent into the al register
@@ -10,4 +10,10 @@ outbl:
     mov eax, [esp + 8]
     mov dx, [esp + 4]
     out dx, eax
+    ret
+
+outbw:
+    mov ax, [esp + 8]
+    mov dx, [esp + 4]
+    out dx, ax
     ret

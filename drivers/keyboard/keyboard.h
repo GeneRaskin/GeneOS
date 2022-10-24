@@ -9,6 +9,12 @@
 #define BACKSPACE 0x0E
 #define SPACEBAR 0x39
 
+#define LINE_BUFFER_SIZE 100
+
+extern char             line_buffer[LINE_BUFFER_SIZE];
+extern volatile uint8_t enter_pressed;
+extern uint32_t         line_length;
+
 void	write_to_console(void);
 char	translate(uint8_t code, int uppercase);
 

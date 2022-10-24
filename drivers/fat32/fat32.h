@@ -28,6 +28,8 @@
 #define FILE_ATTR_ARCHIVE  0x20
 #define FILE_ATTR_DEVICE   0x60
 
+#include "../device.h"
+
 typedef struct _DIRECTORY_ENTRY {
     uint8_t     DIR_Name[11];
     uint8_t     DIR_Attr;
@@ -112,6 +114,7 @@ typedef struct _MOUNT_INFO {
     uint32_t    total_sec;      // total sectors count
     uint16_t    reserved_sec;   // reserved sectors count
     uint32_t    curr_sec;       // current sector
+    uint32_t    first_fat_sec;  // FAT sector
     uint8_t     sec_flags;
     uint32_t    root_dir_size;
     uint8_t     buffer[512];
@@ -134,7 +137,13 @@ typedef union _FAT_FILE_ENTRY {
 }__attribute__((packed)) FAT_FILE_ENTRY;
 
 /* Mount the FAT filesystem
- * Returns 1 on success, 0 otherwise*/
+ * Returns 1 on success, 0 otherwise */
 uint8_t fat_mount_fs(BOOT_SECTOR *bootsec, MOUNT_INFO *mount_info);
+FILE    *fat_directory(const char *dirname, DEVICE *device);
+void    fat_read(FILE *file, uint8_t *buf, uint32_t len,
+                 DEVICE *device);
+uint8_t parse_mbr(DEVICE *dev);
+void    print_fat_info(MOUNT_INFO *mount_info);
+void    fat_ls_root_dir(DEVICE *device);
 
 #endif

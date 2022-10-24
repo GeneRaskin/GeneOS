@@ -13,3 +13,9 @@ void init_pit(uint32_t freq) {
     outb(PIT_REGISTER_CNT0, lbyte);
     outb(PIT_REGISTER_CNT0, hbyte);
 }
+
+/* Sleep for the given amount of time */
+void sys_sleep(uint32_t ms) {
+    uint32_t timer_ticks = tick + ms;
+    while (tick < timer_ticks);
+}

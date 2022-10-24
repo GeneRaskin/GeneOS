@@ -2,9 +2,11 @@ global load_idt, ignore_int_no_error, ignore_int_error
 global keyboard_interrupt_handler, div_by_zero_handler
 global double_fault_handler, general_protection_fault_handler
 global page_fault_handler, timer_interrupt_handler
+global ata_primary_interrupt_handler, ata_secondary_interrupt_handler
 extern ft_printf, keyboard_interrupt, divide_by_zero_exception
 extern general_protection_fault_exception, double_fault_exception
 extern page_fault_exception, timer_interrupt
+extern ata_primary_interrupt, ata_secondary_interrupt
 
 %macro SAVE_REGS 0
 	pushad
@@ -28,20 +30,44 @@ section .data
 section .text
 
 timer_interrupt_handler:
+    cli
     push dword 32
     SAVE_REGS
     call timer_interrupt
     RESTORE_REGS
     add esp, 4
+    sti
     iretd
 
 keyboard_interrupt_handler:
+    cli
 	push dword 33
 	SAVE_REGS
 	call keyboard_interrupt
 	RESTORE_REGS
 	add esp, 4
+	sti
 	iretd
+
+ata_primary_interrupt_handler:
+    cli
+    push dword 46
+    SAVE_REGS
+    call ata_primary_interrupt
+    RESTORE_REGS
+    add esp, 4
+    sti
+    iretd
+
+ata_secondary_interrupt_handler:
+    cli
+    push dword 47
+    SAVE_REGS
+    call ata_secondary_interrupt
+    RESTORE_REGS
+    add esp, 4
+    sti
+    iretd
 
 load_idt:
 	mov eax, [esp + 4]
@@ -49,20 +75,24 @@ load_idt:
 	ret
 
 ignore_int_error:
+    cli
 	SAVE_REGS
 	push dword UNKNOWN_INT_MSG
 	call ft_printf
-	add esp, 4
+	add esp, 8
 	RESTORE_REGS
 	add esp, 4
+	sti
 	iretd
 
 ignore_int_no_error:
+    cli
 	SAVE_REGS
 	push dword UNKNOWN_INT_MSG
 	call ft_printf
 	add esp, 4
 	RESTORE_REGS
+	sti
 	iretd
 
 div_by_zero_handler:

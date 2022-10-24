@@ -123,7 +123,7 @@ void    map_page(uint32_t *physical_addr, uint32_t *virtual_addr,
 /* Map kernel heap starting at 3076 MB virtual
  * Returns 0 if failed, 1 if succeeded. */
 static uint8_t map_memory_for_kheap() {
-    uint32_t i = 0;
+    uint32_t i;
     for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i+=0x1000) {
         if (!request_page(i, 1, 0))
             return 0;
@@ -265,4 +265,8 @@ uint32_t kmalloc_ap(uint32_t size, uint32_t *physical_addr) {
 
 uint32_t kmalloc(uint32_t size) {
     return kmalloc_int(size, 0, 0);
+}
+
+uint32_t kv2p(uint32_t k_virt_addr) {
+    return (k_virt_addr - KERNEL_VIRTUAL_ADDR);
 }

@@ -19,6 +19,8 @@ typedef struct _FILE {
     uint32_t dev_id;
 } FILE;
 
+extern char last_dev;
+
 typedef void        (*mount_type)(void);
 typedef FILE        *(*open_type)(const char *filename);
 typedef int32_t     (*read_type)(FILE *file, uint8_t *buffer,
@@ -31,7 +33,11 @@ typedef struct _FSYS {
     read_type read;
     close_type close;
     open_type open;
+    uint8_t type;
+    void    *type_specific_info;
 } FSYS;
+
+extern FSYS *file_systems[MAX_DEVICES];
 
 FILE    *vfs_open_file(const char *filename);
 int32_t vfs_read_file(FILE *file, uint8_t *buffer, uint32_t len);

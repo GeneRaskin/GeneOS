@@ -2,7 +2,8 @@ SRCS = $(wildcard cstd/libft/*.c cstd/printf/*.c *.c drivers/fb_routines/*.c \
 	drivers/serial/*.c drivers/fb_write/*.c interrupts/*.c \
 	drivers/keyboard/*.c memory/physmemmngr/*.c memory/paging/*.c \
 	debug/*.c memory/kheap/*.c ordered_array/*.c vfs/*.c \
-	drivers/cpu/*.c drivers/dma/*.c drivers/pci/*.c)
+	drivers/cpu/*.c drivers/dma/*.c drivers/pci/*.c drivers/ata/*.c \
+	drivers/*.c drivers/fat32/*.c kshell/*.c)
 ASM_SRCS = $(wildcard drivers/*.s *.s interrupts/*.s drivers/serial/*.s \
 	memory/physmemmngr/*.s memory/paging/*.s debug/*.s drivers/cpu/*.s )
 OBJS = $(filter %.o,$(patsubst %.c,%.o,$(SRCS)) $(patsubst %.s,%.o,$(ASM_SRCS)))

@@ -15,6 +15,7 @@ void	fb_move_cursor(uint16_t pos)
 	outb(FB_DATA_PORT, ((pos >> 8) & 0x00FF));
 	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
 	outb(FB_DATA_PORT, pos & 0x00FF);
+    fb_write_cell(pos * 2, 0x0, fb_fg_color, FB_WHITE);
 	fb_pos = pos;
 }
 

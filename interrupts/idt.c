@@ -42,6 +42,10 @@ void	init_idt(void)
 			init_idt_desc(0x08, (uint32_t) keyboard_interrupt_handler, INTGATE, &idt_entries[33]);
         else if (i == 32)
             init_idt_desc(0x08, (uint32_t) timer_interrupt_handler, INTGATE, &idt_entries[32]);
+        else if (i == 46)
+            init_idt_desc(0x08, (uint32_t) ata_primary_interrupt_handler, INTGATE, &idt_entries[46]);
+        else if (i == 47)
+            init_idt_desc(0x08, (uint32_t) ata_secondary_interrupt_handler, INTGATE, &idt_entries[47]);
 		else
 			init_idt_desc(0x08, (uint32_t) ignore_int_no_error, INTGATE, &idt_entries[i]);
 	}
@@ -54,9 +58,9 @@ void	init_idt(void)
 	load_idt(&kidt);
 	
 	init_pic();
-    init_pit(50);
-	outb(PIC1_DATA, 0b11111100);
-	outb(PIC2_DATA, 0b11111111);
+    init_pit(1000);
+	outb(PIC1_DATA, 0b11111000);
+	outb(PIC2_DATA, 0b00111111);
 	
 	asm ("sti");
 }

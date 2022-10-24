@@ -48,5 +48,8 @@ void			ft_putstr(char *s);
 void			ft_putendl(char *s);
 void			ft_putnbr(int n);
 char			*ft_itoa(int n);
+char		    **ft_split(char const *s, char c, int *argc);
+float           ft_strtof(const char *nptr, char **endptr);
+long            ft_strtol(const char *nptr, char **endptr, int base);
 
 #endif

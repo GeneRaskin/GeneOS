@@ -12,6 +12,8 @@
 #include "debug/debug.h"
 #include "memory/kheap/kheap.h"
 #include "drivers/pci/pci.h"
+#include "drivers/ata/ata.h"
+#include "kshell/kshell.h"
 
 uint16_t	fb_pos = 0;
 char		*fb = (char *) FB_ADDRESS;
@@ -82,28 +84,12 @@ void	kmain(multiboot_info_t *mbd, uint32_t magic)
     kheap = create_heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE,
                         KHEAP_MAX_ADDR, 1, 0);
     pci_enumerate();
-    /*uint32_t a = kmalloc(8);
-    uint32_t b = kmalloc(8);
-    uint32_t c = kmalloc(8);
-    ft_printf("a: %p ", a);
-    ft_printf("b: %p\n", b);
-    ft_printf("c: %p ", c);
-    uint32_t d = kmalloc(12);
-    ft_printf("d: %p\n", d);
-    free((void *)c, kheap);
-    free((void *)b, kheap);
-    c = kmalloc_a(10);
-    ft_printf("c: %p\n", c);
-    print_heap(kheap);
-    print_heap_index(kheap);*/
     k_lspci();
-    //check_kernel_stack_protector();
-    /*uint32_t *p = (uint32_t *)0x10000000;
-    ft_printf("%d\n", *p);*/
+    init_mount_list();
+    ata_init();
+    kshell();
 	/*serial_configure_baud_rate(SERIAL_COM1_BASE, 1);
 	serial_configure_line(SERIAL_COM1_BASE);
 	serial_configure_buffer(SERIAL_COM1_BASE);
 	serial_configure_modem(SERIAL_COM1_BASE);*/
-	while (1) {
-	}
 }

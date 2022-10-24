@@ -50,5 +50,6 @@ uint32_t                kmalloc_p(uint32_t size, uint32_t *physical_addr);
 /* kmalloc_ap: sets a physical_addr pointer & returns a page-aligned address */
 uint32_t                kmalloc_ap(uint32_t size, uint32_t *physical_addr);
 uint32_t                kmalloc(uint32_t size);
+uint32_t                kv2p(uint32_t k_virt_addr);
 
 #endif

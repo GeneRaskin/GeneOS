@@ -2,6 +2,7 @@
 #define PCI_H
 
 #include "../io.h"
+#include "../../vfs/vfs.h"
 
 /* PCI I/O ports */
 #define PCI_CONFIG_ADDR 0xCF8
@@ -94,7 +95,6 @@ typedef enum _PCI_DEV_TYPE {
 } PCI_DEV_TYPE;
 
 struct _PCI_BUS;
-struct _PCI_DRIVER;
 
 /* PCI device linked list STRUCT */
 typedef struct _PCI_DEVICE {
@@ -106,7 +106,6 @@ typedef struct _PCI_DEVICE {
     struct _PCI_DEVICE *next;
     struct _PCI_BUS *bus;
     struct _PCI_DEVICE *sibling;
-    struct _PCI_DRIVER *attached_driver;
 } PCI_DEVICE;
 
 /* PCI bus STRUCT */
@@ -117,11 +116,6 @@ typedef struct _PCI_BUS {
     struct _PCI_BUS *next;
     PCI_DEVICE *devices;
 } PCI_BUS;
-
-/* PCI driver struct */
-typedef struct _PCI_DRIVER {
-    char *name;
-} PCI_DRIVER;
 
 extern PCI_BUS *pci_root;
 
@@ -138,6 +132,7 @@ PCI_DEVICE  *init_pci_device(CONFIG_ADDRESS_REG *addr,
                              PCI_BUS *parent);
 PCI_BUS     *init_pci_bus(PCI_BUS *parent, uint8_t bus_num);
 void        pci_enumerate();
+PCI_DEVICE  *locate_device(uint32_t class_code, uint32_t subclass);
 void        k_lspci();
 
 #endif
