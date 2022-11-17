@@ -84,6 +84,8 @@ char	translate(uint8_t code, int uppercase)
 	{
         if (code == 12)
             translated = '_';
+        else if (code == 39)
+            translated = ':';
         else
             translated = ASCIITable[code] - 32;
         line_buffer[line_length++] = translated;

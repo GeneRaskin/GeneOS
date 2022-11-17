@@ -10,6 +10,7 @@
 #define SPACEBAR 0x39
 
 #define LINE_BUFFER_SIZE 100
+extern uint32_t prompt_width;
 
 extern char             line_buffer[LINE_BUFFER_SIZE];
 extern volatile uint8_t enter_pressed;

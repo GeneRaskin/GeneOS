@@ -4,6 +4,8 @@
 #include "../../memory/paging/paging.h"
 #include "../../memory/kheap/kheap.h"
 
+void    fat_print_dir_entry(DIRECTORY_ENTRY *directory);
+
 uint8_t    fat_determine_fs_type(BOOT_SECTOR *bootsec, MOUNT_INFO *mount_info) {
     BIOS_PARAMETER_BLOCK bpb = bootsec->bpb;
     uint16_t root_dir_sec = ((bpb.BPB_RootEntCnt * 32) +
@@ -56,41 +58,77 @@ uint8_t fat_mount_fs(BOOT_SECTOR *bootsec, MOUNT_INFO *mount_info) {
     return 1;
 }
 
-FILE    *fat_directory(const char *dirname, DEVICE *device) {
+uint32_t calc_start_sec(DEVICE *device) {
+    MOUNT_INFO  *mount_info = (MOUNT_INFO *)device->fs->type_specific_info;
+    uint32_t    curr_cls = device->fs->curr_cls;
+    uint32_t    first_data_sec = mount_info->first_data_sec - mount_info->root_dir_size;
+    uint32_t    sector_offset = (curr_cls - FAT_FIRST_DATA_CLS) * mount_info->sec_per_Cls;
+    return first_data_sec + sector_offset;
+}
+
+uint32_t    get_cls_value(DEVICE *dev, uint32_t cls_number) {
+    MOUNT_INFO *mount_info = (MOUNT_INFO *)dev->fs->type_specific_info;
+    uint32_t num_bytes_into_table = cls_number * 2;
+    uint32_t sec_to_read = num_bytes_into_table / 512;
+    uint8_t fat_buffer[512];
+    dev->seek(dev, mount_info->first_fat_sec + sec_to_read);
+    dev->read(dev, fat_buffer, 1);
+    return (((uint16_t *)fat_buffer)[(num_bytes_into_table % 512) / 2]);
+}
+
+FILE    *fat_parse_directory(const char *dirname, DEVICE *device) {
     FILE            *file = (FILE *)kmalloc(sizeof(file));
     MOUNT_INFO      *mount_info = (MOUNT_INFO *)device->fs->type_specific_info;
     uint8_t         buffer[512];
+    uint32_t        curr_cls = device->fs->curr_cls;
+    uint32_t        old_cls = curr_cls;
+    uint32_t        dirname_len = ft_strlen(dirname);
     DIRECTORY_ENTRY *directory;
-    for (uint32_t sector = 0; sector < mount_info->root_dir_size; sector++) {
-        /*read in sector*/
-        device->read(device, buffer, 1);
-        /*get directory info*/
-        directory = (DIRECTORY_ENTRY *)buffer;
-        /* 16 entries per sector */
-        for (uint32_t i = 0; i < 16; ++i) {
-            char name[11];
-            ft_memcpy(name, directory->DIR_Name, 11);
-            if (ft_strncmp(dirname, name, 11) == 0) {
-                /* dir is found */
-                ft_strlcpy((char *)file->name, dirname, 12);
-                file->id = 0;
-                file->curr_cls = directory->DIR_FstClusLO;
-                file->curr_cls |= (directory->DIR_FstClusHI << 16);
-                file->eof = 0;
-                file->file_size = directory->DIR_FileSize;
-                /* set file type */
-                if (directory->DIR_Attr == 0x10)
-                    file->flags = DIR_TYPE;
-                else
-                    file->flags = FILE_TYPE;
-                return file;
+
+    ft_printf("Parsing cluster: %x\n", device->fs->curr_cls);
+    do {
+        device->fs->curr_cls = curr_cls;
+        for (uint32_t sector = 0; sector < mount_info->sec_per_Cls; sector++) {
+            /*read in sector*/
+            device->seek(device, calc_start_sec(device) + sector);
+            device->read(device, buffer, 1);
+            /*get directory info*/
+            directory = (DIRECTORY_ENTRY *) buffer;
+            /* 16 entries per sector */
+            for (uint32_t i = 0; i < 16; ++i) {
+                char name[12];
+                ft_strlcpy(name, (char *)directory->DIR_Name, 12);
+                if (ft_strncmp(dirname, name, dirname_len) == 0
+                    && (!name[dirname_len + 1] || name[dirname_len + 1] == ' ')) {
+                    /* dir is found */
+                    ft_strlcpy((char *) file->name, dirname, 12);
+                    file->id = 0;
+                    file->curr_cls = directory->DIR_FstClusLO;
+                    file->curr_cls |= (directory->DIR_FstClusHI << 16);
+                    file->curr_cls += FAT_FIRST_DATA_CLS - 1;
+                    //ft_printf("%d\n", file->curr_cls);
+                    file->eof = 0;
+                    file->file_size = directory->DIR_FileSize;
+                    /* set file type */
+                    if (directory->DIR_Attr == 0x10)
+                        file->flags = DIR_TYPE;
+                    else
+                        file->flags = FILE_TYPE;
+                    device->fs->curr_cls = old_cls;
+                    return file;
+                }
+                /* otherwise go to the next directory */
+                //fat_print_dir_entry(directory);
+                directory++;
             }
-            /* otherwise go to the next directory */
-            directory++;
         }
-    }
+        if (curr_cls < 0xFFF7 && curr_cls > 0x0001)
+            curr_cls = get_cls_value(device, curr_cls);
+        ft_printf("Parsing cluster: %x\n", curr_cls);
+    } while (curr_cls < 0xFFF7 && curr_cls > 0x0001);
     /* failed to find a directory */
     file->flags = INVALID_TYPE;
+    device->fs->curr_cls = old_cls;
     return file;
 }
 
@@ -120,8 +158,9 @@ void    fat_ls_root_dir(DEVICE *device) {
     DIRECTORY_ENTRY *directory;
     uint8_t         vol_label[12];
     /* read fat table */
-    ft_printf("start sector: %d\n", mount_info->first_data_sec - mount_info->root_dir_size);
-    device->seek(device, mount_info->first_data_sec - mount_info->root_dir_size);
+    ft_printf("curr cls: %d start sector: %d\n", device->fs->curr_cls,
+              calc_start_sec(device));
+    device->seek(device, calc_start_sec(device));
     for (uint32_t sector = 0; sector < mount_info->root_dir_size; sector++) {
         /*read in sector*/
         device->read(device, buffer, 1);
@@ -144,6 +183,7 @@ void    fat_ls_root_dir(DEVICE *device) {
             file->id = 0;
             file->curr_cls = directory->DIR_FstClusLO;
             file->curr_cls |= (directory->DIR_FstClusHI << 16);
+            file->curr_cls += FAT_FIRST_DATA_CLS - 1;
             file->eof = 0;
             file->file_size = directory->DIR_FileSize;
             /* set file type */
@@ -155,29 +195,37 @@ void    fat_ls_root_dir(DEVICE *device) {
     }
 }
 
-void    fat_read(FILE *file, uint8_t *buf, uint32_t len, DEVICE *device) {
-    (void)len;
-    if (file) {
-        /* get starting physical sector */
-        uint32_t phys_sec = 32 + (file->curr_cls - 1);
-        device->seek(device, phys_sec);
-        device->read(device, buf, 1);
-        uint32_t fat_offset = file->curr_cls + (file->curr_cls / 2);
-        uint32_t fat_sector = 1 + (fat_offset / 512);
-        //uint32_t entry_offset = fat_offset % 512;
-        device->seek(device, fat_sector);
-        device->read(device, buf, 1);
-        device->read(device, buf, 1);
+uint8_t fat_set_dir(DEVICE *device, const char *filename, uint8_t absolute) {
+    //MOUNT_INFO *mount_info = (MOUNT_INFO *)device->fs->type_specific_info;
+    FILE *curr_dir_entry;
+    uint32_t old_cls = device->fs->curr_cls;
+    if (absolute)
+        device->fs->curr_cls = FAT_FIRST_DATA_CLS;
+    int num_dirs;
+    char **dir_names = ft_split(filename, '\\', &num_dirs);
+    if (!num_dirs)
+        return (0);
+    for (uint8_t i = 0; i < num_dirs;) {
+        curr_dir_entry = fat_parse_directory(dir_names[i], device);
+        if (curr_dir_entry->flags == DIR_TYPE) {
+            ft_printf("found dir %s at cluster %d\n",
+                      dir_names[i], curr_dir_entry->curr_cls);
+            device->fs->curr_cls = curr_dir_entry->curr_cls;
+            i++;
+            free(curr_dir_entry, kheap);
+        } else {
+            free(curr_dir_entry, kheap);
+            device->fs->curr_cls = old_cls;
+            return (0);
+        }
     }
+    return (1);
 }
 
-/*FILE    *fat_open_file(const char *filename) {
-    FILE curr_dir;
-    char *p = 0;
-    // look for '\' in the path provided
-    p = ft_strchr(path, '\\');
-    if (!p) {
-
-    }
-    p++; // increment the pointer
+/*
+FILE    *fat_open_file(DEVICE *device, const char *filename, uint8_t absolute) {
+    MOUNT_INFO *mount_info = (MOUNT_INFO *)device->fs->type_specific_info;
+    uint32_t old_cls = device->fs->curr_cls;
+    if (absolute)
+        device->fs->curr_cls = mount_info->first_data_sec - mount_info->root_dir_size;
 }*/

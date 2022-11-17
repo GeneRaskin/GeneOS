@@ -15,11 +15,11 @@ const char *tokens[] = {
         "mount_info",
         "fat_ls_root",
         "cd",
-        "pwd"
+        "pwd",
         0
 };
 
-char *curr_path[100] = {0};
+char curr_path[MAX_PATH] = {0};
 const char *usages[] = {
         "basic [[--] args]",
         NULL
@@ -30,6 +30,60 @@ void    print_mount_info() {
         ft_printf("File System id: %c ", i);
         print_fat_info(file_systems[i - 'A']->type_specific_info);
     }
+}
+
+void    cd(int argc, char **argv) {
+    uint8_t absolute = 0;
+    DEVICE  *device;
+    if (argc != 2) {
+        ft_printf("Wrong syntax\n");
+        return;
+    }
+    char *path = argv[1];
+    uint32_t path_size = ft_strlen(path);
+    if (!path_size) {
+        ft_printf("Wrong path\n");
+        return;
+    }
+    char dev_id = path[0];
+    if (path_size >= 3) {
+        if (path[1] == ':' && path[2] == '\\' &&
+            dev_id <= 'Z' && dev_id >= 'A') {
+            if (path_size == 3) {
+                if (file_systems[dev_id - 'A']) {
+                    prompt_width = path_size + 8;
+                    file_systems[dev_id - 'A']->curr_cls = FAT_FIRST_DATA_CLS;
+                    ft_strlcpy(curr_path, path, path_size + 1);
+                }
+                else
+                    ft_printf("Wrong path\n");
+                return;
+            } else {
+                absolute = 1;
+                if (file_systems[dev_id - 'A']) {
+                    device = file_systems[dev_id - 'A']->dev_handle;
+                    if (!fat_set_dir(device, path + 3, absolute)) {
+                        ft_printf("Wrong path\n");
+                        return;
+                    }
+                    ft_strlcpy(curr_path, path, path_size + 1);
+                    prompt_width = path_size + 8;
+                    return;
+                }
+            }
+        }
+    }
+    if (!*curr_path) {
+        ft_printf("Drive not set!\n");
+        return;
+    }
+    device = file_systems[dev_id - curr_path[0]]->dev_handle;
+    if (!fat_set_dir(device, path, absolute)) {
+        ft_printf("Wrong path\n");
+        return;
+    }
+    prompt_width = path_size + 10;
+    ft_strlcpy(curr_path + 3, path, path_size + 1);
 }
 
 /* This command takes 2 args in the format
@@ -108,15 +162,23 @@ void    execute_command() {
                     return;
                 case 1:
                     ls_ata();
+                    free_argv(argc, argv);
                     return;
                 case 2:
                     print_heap(kheap);
+                    free_argv(argc, argv);
                     return;
                 case 3:
                     print_mount_info();
+                    free_argv(argc, argv);
                     return;
                 case 4:
                     fat_ls_root_dir(ata_devices[0]);
+                    free_argv(argc, argv);
+                    return;
+                case 5:
+                    cd(argc, argv);
+                    free_argv(argc, argv);
                     return;
             }
         }
@@ -126,8 +188,12 @@ void    execute_command() {
 }
 
 void    kshell() {
+    prompt_width = 7;
     while (1) {
-        ft_printf("kernel>");
+        if (*curr_path)
+            ft_printf("kernel:%s>", curr_path);
+        else
+            ft_printf("kernel>");
         while (!enter_pressed);
         if (enter_pressed) {
             asm("cli");

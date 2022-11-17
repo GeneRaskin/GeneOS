@@ -34,7 +34,9 @@ typedef struct _FSYS {
     close_type close;
     open_type open;
     uint8_t type;
+    DEVICE  *dev_handle;
     void    *type_specific_info;
+    uint32_t curr_cls; // curr directory file location
 } FSYS;
 
 extern FSYS *file_systems[MAX_DEVICES];

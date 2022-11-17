@@ -42,6 +42,8 @@ uint8_t parse_mbr(DEVICE *dev) {
     dev->fs = new_fs;
     ft_memset(new_fs, 0, sizeof(FSYS));
     new_fs->type_specific_info = mount_info;
+    new_fs->curr_cls = FAT_FIRST_DATA_CLS;
+    new_fs->dev_handle = dev;
     vfs_register_fsys(new_fs, last_dev);
     last_dev++;
     free(buf, kheap);

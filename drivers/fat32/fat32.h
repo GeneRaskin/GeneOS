@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define FAT_FIRST_DATA_CLS 2
+
 #define TYPE_FAT12 0
 #define TYPE_FAT16 1
 #define TYPE_FAT32 2
@@ -29,6 +31,7 @@
 #define FILE_ATTR_DEVICE   0x60
 
 #include "../device.h"
+#include "../../vfs/vfs.h"
 
 typedef struct _DIRECTORY_ENTRY {
     uint8_t     DIR_Name[11];
@@ -139,7 +142,8 @@ typedef union _FAT_FILE_ENTRY {
 /* Mount the FAT filesystem
  * Returns 1 on success, 0 otherwise */
 uint8_t fat_mount_fs(BOOT_SECTOR *bootsec, MOUNT_INFO *mount_info);
-FILE    *fat_directory(const char *dirname, DEVICE *device);
+FILE    *fat_parse_directory(const char *dirname, DEVICE *device);
+uint8_t fat_set_dir(DEVICE *device, const char *filename, uint8_t absolute);
 void    fat_read(FILE *file, uint8_t *buf, uint32_t len,
                  DEVICE *device);
 uint8_t parse_mbr(DEVICE *dev);
