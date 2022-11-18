@@ -27,6 +27,8 @@ typedef int32_t     (*read_type)(FILE *file, uint8_t *buffer,
         uint32_t len);
 typedef int32_t     (*close_type)(FILE *file);
 
+struct _DEVICE;
+
 typedef struct _FSYS {
     uint8_t name[8];
     mount_type mount;
@@ -34,7 +36,7 @@ typedef struct _FSYS {
     close_type close;
     open_type open;
     uint8_t type;
-    DEVICE  *dev_handle;
+    struct _DEVICE  *dev_handle;
     void    *type_specific_info;
     uint32_t curr_cls; // curr directory file location
 } FSYS;

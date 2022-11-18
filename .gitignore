@@ -1,5 +1,6 @@
 *.o
 cmake-build-debug
+build
 .idea
 *.iso
 *.elf
