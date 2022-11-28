@@ -25,7 +25,6 @@ The following features are expected to be implemented:
 3. Multitasking
 4. ATA DMA driver
 5. Full FAT32 support for MBR disks
-6. Compilation Process
 
 ## Obtaining the cross-compiler
 
